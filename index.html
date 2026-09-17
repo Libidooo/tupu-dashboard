@@ -29,13 +29,13 @@ body{
 /* ============ 前景内容 ============ */
 main{position:relative;z-index:2}
 section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:12vh 6vw}
-.hero{flex-direction:column;text-align:center;position:relative}
+.hero{flex-direction:column;text-align:center;justify-content:flex-end;padding-bottom:17vh;position:relative}
 .hero h1{font-size:clamp(2.1rem,6vw,4.4rem);letter-spacing:.18em;text-indent:.18em;font-weight:600;
   text-shadow:0 0 46px rgba(212,162,74,.4),0 2px 8px rgba(0,0,0,.6)}
 .hero .sub{margin-top:1.5rem;color:var(--dim);letter-spacing:.34em;text-indent:.34em;font-size:.92rem}
 .hero .divider{margin:2.4rem auto 0;width:130px;height:1px;
   background:linear-gradient(90deg,transparent,var(--gold),transparent)}
-.scroll-hint{position:absolute;bottom:9vh;left:50%;transform:translateX(-50%);
+.scroll-hint{position:absolute;bottom:7vh;left:50%;transform:translateX(-50%);
   color:var(--dim);letter-spacing:.4em;text-indent:.4em;font-size:.78rem;
   animation:bob 2.8s ease-in-out infinite;white-space:nowrap}
 @keyframes bob{0%,100%{transform:translate(-50%,0);opacity:.75}50%{transform:translate(-50%,12px);opacity:.35}}
@@ -160,7 +160,7 @@ const PARTS=[];
 })();
 
 function wheelBase(){
-  return {cx:W/2,cy:H*.4,R:Math.min(W,H)*.27};
+  return {cx:W/2,cy:H*.36,R:Math.min(W,H)*.27};
 }
 
 /* 第一态：实体唐卡金轮 */
@@ -308,7 +308,7 @@ for(const side of ['L','R'])
   variantGroups[side]=[...attEls[side].querySelectorAll('.variant')];
 
 function updateAttendants(p){
-  const vis=smooth(.03,.12,p)*(1-smooth(.88,1,p));
+  const vis=(.8+.2*smooth(.03,.12,p))*(1-smooth(.88,1,p));
   const idx=Math.min(5,Math.floor(p*5.999));
   const local=p*6-idx;               /* 本变相内的局部进度 */
   const cross=smooth(.78,1,local);   /* 段末交叉淡入下一相 */
