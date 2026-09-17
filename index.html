@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>石刻造像题记知识图谱 - 3D 立体图</title>
+<script src="js/d3.min.js"></script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%232c3e50'/><text x='16' y='23' text-anchor='middle' fill='white' font-size='18' font-family='serif'>佛</text></svg>">
+<link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>石刻造像题记 · 3D 立体知识图谱</h1>
+    <div id="controls">
+      <label>宗派筛选:
+        <select id="sect-filter" multiple size="1"></select>
+      </label>
+    </div>
+  </header>
+
+  <div id="main">
+    <div id="search-panel">
+      <div class="sp-header">搜索定位</div>
+      <div class="sp-row"><select id="sp-period"><option value="">时期（全部）</option></select></div>
+      <div class="sp-row"><select id="sp-region"><option value="">地区（全部）</option></select></div>
+      <div class="sp-row"><select id="sp-class"><option value="">阶层（全部）</option></select></div>
+      <div class="sp-row"><select id="sp-vow"><option value="">祈愿（全部）</option></select></div>
+      <div class="sp-row"><input id="sp-keyword" placeholder="题记名称关键词..."></div>
+      <div id="sp-count" class="sp-count">0 条结果</div>
+      <div id="sp-list"></div>
+    </div>
+    <div id="vis-container">
+      <div id="tooltip" class="tooltip" style="display:none;"></div>
+      <div id="stats-bar"></div>
+      <div id="legend">
+        <div class="legend-title">图例</div>
+        <div id="legend-items"></div>
+      </div>
+    </div>
+    <div class="slider-container">
+      <label>时间范围 <span id="year-min-val"></span> — <span id="year-max-val"></span></label>
+      <input type="range" id="year-min" min="400" max="1400" value="400">
+      <input type="range" id="year-max" min="400" max="1400" value="1400">
+      <div class="slider-values"><span>400</span><span>1400</span></div>
+    </div>
+    <div id="detail-panel">
+      <button class="close-btn" onclick="closeDetail()">&times;</button>
+      <h2>题记详情</h2>
+      <div id="detail-body"></div>
+    </div>
+  </div>
+</div>
+<script src="js/main.js?v=4"></script>
+</body>
+</html>
