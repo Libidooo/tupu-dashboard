@@ -3,54 +3,362 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>石刻造像题记知识图谱 - 3D 立体图</title>
-<script src="js/d3.min.js"></script>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%232c3e50'/><text x='16' y='23' text-anchor='middle' fill='white' font-size='18' font-family='serif'>佛</text></svg>">
-<link rel="stylesheet" href="css/style.css?v=2">
+<title>石刻造像题记知识图谱</title>
+<link rel="icon" href="favicon.ico">
+<style>
+:root{
+  --ink:#0a0714; --paper:#f3e9d2; --gold:#d4a24a; --gold-hi:#f6d78a;
+  --cyan:#2dd4e8; --magenta:#f43f8e; --dim:rgba(243,233,210,.55);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:radial-gradient(120vmax 90vmax at 50% 30%, #17102b 0%, #0b0716 45%, #050308 100%);
+  color:var(--paper);
+  font-family:"Songti SC","Noto Serif SC","Source Han Serif SC","SimSun",serif;
+  overflow-x:hidden;
+}
+/* ============ 固定舞台层 ============ */
+#stage{position:fixed;inset:0;z-index:0;pointer-events:none}
+#wheel-canvas{position:absolute;inset:0;width:100%;height:100%}
+.attendant{position:absolute;bottom:2vh;width:min(20vw,290px)}
+.attendant.left{left:1.5vw}
+.attendant.right{right:1.5vw;transform:scaleX(-1)}
+#mark-caption{position:fixed;left:50%;transform:translateX(-50%);bottom:2rem;z-index:1;
+  font-size:.82rem;letter-spacing:.5em;text-indent:.5em;color:var(--dim);pointer-events:none;
+  text-shadow:0 0 12px rgba(0,0,0,.8)}
+/* ============ 前景内容 ============ */
+main{position:relative;z-index:2}
+section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:12vh 6vw}
+.hero{flex-direction:column;text-align:center;position:relative}
+.hero h1{font-size:clamp(2.1rem,6vw,4.4rem);letter-spacing:.18em;text-indent:.18em;font-weight:600;
+  text-shadow:0 0 46px rgba(212,162,74,.4),0 2px 8px rgba(0,0,0,.6)}
+.hero .sub{margin-top:1.5rem;color:var(--dim);letter-spacing:.34em;text-indent:.34em;font-size:.92rem}
+.hero .divider{margin:2.4rem auto 0;width:130px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.scroll-hint{position:absolute;bottom:9vh;left:50%;transform:translateX(-50%);
+  color:var(--dim);letter-spacing:.4em;text-indent:.4em;font-size:.78rem;
+  animation:bob 2.8s ease-in-out infinite;white-space:nowrap}
+@keyframes bob{0%,100%{transform:translate(-50%,0);opacity:.75}50%{transform:translate(-50%,12px);opacity:.35}}
+.panel{max-width:860px;width:100%;margin:0 auto;background:rgba(10,7,20,.58);
+  border:1px solid rgba(212,162,74,.28);padding:3.4rem 3rem;
+  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.panel .no{font-size:.78rem;letter-spacing:.6em;color:var(--gold);margin-bottom:1.3rem}
+.panel h2{font-size:1.65rem;letter-spacing:.24em;font-weight:600;margin-bottom:1.8rem}
+.panel .blank{min-height:190px;display:flex;align-items:center;justify-content:center;
+  border:1px dashed rgba(243,233,210,.18);color:rgba(243,233,210,.35);
+  letter-spacing:.45em;text-indent:.45em;font-size:.9rem}
+.entries{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:1.4rem}
+a.card{display:block;text-decoration:none;color:var(--paper);
+  border:1px solid rgba(212,162,74,.35);padding:2.1rem 1.7rem;background:rgba(10,7,20,.55);
+  transition:border-color .35s,box-shadow .35s,transform .35s;
+  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+a.card:hover{border-color:var(--gold-hi);box-shadow:0 0 34px rgba(212,162,74,.2);transform:translateY(-3px)}
+a.card .t{font-size:1.12rem;letter-spacing:.2em;margin-bottom:.7rem}
+a.card .d{font-size:.8rem;color:var(--dim);letter-spacing:.08em;line-height:1.8}
+a.card.soon{opacity:.45}
+footer{position:relative;z-index:2;text-align:center;padding:5rem 0 4.5rem;
+  color:rgba(243,233,210,.35);font-size:.78rem;letter-spacing:.3em}
+@media (max-width:760px){
+  .attendant{width:36vw;opacity:.5}
+  .panel{padding:2.3rem 1.6rem}
+}
+</style>
 </head>
 <body>
-<div id="app">
-  <header>
-    <h1>石刻造像题记 · 3D 立体知识图谱</h1>
-    <div id="controls">
-      <label>宗派筛选:
-        <select id="sect-filter" multiple size="1"></select>
-      </label>
-    </div>
-  </header>
 
-  <div id="main">
-    <div id="search-panel">
-      <div class="sp-header">搜索定位</div>
-      <div class="sp-row"><select id="sp-period"><option value="">时期（全部）</option></select></div>
-      <div class="sp-row"><select id="sp-region"><option value="">地区（全部）</option></select></div>
-      <div class="sp-row"><select id="sp-class"><option value="">阶层（全部）</option></select></div>
-      <div class="sp-row"><select id="sp-vow"><option value="">祈愿（全部）</option></select></div>
-      <div class="sp-row"><input id="sp-keyword" placeholder="题记名称关键词..."></div>
-      <div id="sp-count" class="sp-count">0 条结果</div>
-      <div id="sp-list"></div>
-    </div>
-    <div id="vis-container">
-      <div id="tooltip" class="tooltip" style="display:none;"></div>
-      <div id="stats-bar"></div>
-      <div id="legend">
-        <div class="legend-title">图例</div>
-        <div id="legend-items"></div>
-      </div>
-    </div>
-    <div class="slider-container">
-      <label>时间范围 <span id="year-min-val"></span> — <span id="year-max-val"></span></label>
-      <input type="range" id="year-min" min="400" max="1400" value="400">
-      <input type="range" id="year-max" min="400" max="1400" value="1400">
-      <div class="slider-values"><span>400</span><span>1400</span></div>
-    </div>
-    <div id="detail-panel">
-      <button class="close-btn" onclick="closeDetail()">&times;</button>
-      <h2>题记详情</h2>
-      <div id="detail-body"></div>
-    </div>
-  </div>
+<div id="stage">
+  <canvas id="wheel-canvas"></canvas>
+  <svg class="attendant left"  id="att-L" viewBox="0 0 200 400" aria-hidden="true"></svg>
+  <svg class="attendant right" id="att-R" viewBox="0 0 200 400" aria-hidden="true"></svg>
 </div>
-<script src="js/main.js?v=4"></script>
+<div id="mark-caption">三十六相 · 第 1 相</div>
+
+<main>
+  <section class="hero">
+    <h1>石刻造像题记知识图谱</h1>
+    <div class="sub">SICHUAN CAVE INSCRIPTIONS · KNOWLEDGE GRAPH</div>
+    <div class="divider"></div>
+    <div class="scroll-hint">徐徐滚动 · 法轮常转 ▽</div>
+  </section>
+
+  <section><div class="panel">
+    <div class="no">壹 · 缘起</div>
+    <h2>关于本项目</h2>
+    <div class="blank">内 容 待 补</div>
+  </div></section>
+
+  <section><div class="panel">
+    <div class="no">贰 · 课题组</div>
+    <h2>研究团队</h2>
+    <div class="blank">信 息 待 补</div>
+  </div></section>
+
+  <section><div class="panel">
+    <div class="no">叁 · 数据</div>
+    <h2>数据与图谱</h2>
+    <div class="blank">信 息 待 补</div>
+  </div></section>
+
+  <section><div class="panel">
+    <div class="no">肆 · 入口</div>
+    <h2>进入图谱</h2>
+    <div class="entries">
+      <a class="card" href="graph.html">
+        <div class="t">3D 立体图谱</div>
+        <div class="d">992 条题记的多维可视化<br>时间 · 阶层 · 宗派 · 性别</div>
+      </a>
+      <a class="card soon">
+        <div class="t">在线查询</div>
+        <div class="d">Neo4j 图数据库查询台<br>即将开放</div>
+      </a>
+      <a class="card" href="https://github.com/Libidooo/tupu-dashboard" target="_blank" rel="noopener">
+        <div class="t">GitHub</div>
+        <div class="d">项目仓库<br>数据与源码</div>
+      </a>
+    </div>
+  </div></section>
+</main>
+
+<footer>石刻造像题记知识图谱 · CICSONCY.SBS</footer>
+
+<script>
+'use strict';
+/* ================= 工具 ================= */
+const clamp01=v=>v<0?0:v>1?1:v;
+const smooth=(a,b,v)=>{const t=clamp01((v-a)/(b-a));return t*t*(3-2*t)};
+const TAU=Math.PI*2;
+const GOLD='#d4a24a',GOLD_HI='#f6d78a',CYAN='#2dd4e8',MAG='#f43f8e';
+
+/* ================= 滚动进度 ================= */
+let scrollP=0,smoothP=0;
+function onScroll(){
+  const max=document.documentElement.scrollHeight-innerHeight;
+  scrollP=max>0?window.scrollY/max:0;
+}
+addEventListener('scroll',onScroll,{passive:true});
+addEventListener('resize',onScroll);onScroll();
+
+/* ================= 法轮画布 ================= */
+const cv=document.getElementById('wheel-canvas'),ctx=cv.getContext('2d');
+let W=0,H=0;
+function sizeCanvas(){
+  const dpr=Math.min(devicePixelRatio||1,2);
+  W=innerWidth;H=innerHeight;
+  cv.width=W*dpr;cv.height=H*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+sizeCanvas();addEventListener('resize',sizeCanvas);
+
+/* 粒子：沿法轮几何采样（轮圈 / 八辐 / 轮毂） */
+const PARTS=[];
+(function(){
+  const add=(a,r,c,s)=>PARTS.push({a,r,c,s,k:Math.random()*TAU,v:.6+Math.random()*1.8});
+  for(let i=0;i<540;i++) add(Math.random()*TAU,.86+Math.random()*.16,i%2?GOLD:GOLD_HI,.8+Math.random()*1.4);
+  for(let s=0;s<8;s++)for(let i=0;i<72;i++)
+    add(s*TAU/8+(Math.random()-.5)*.06,.2+Math.random()*.66,s%2?CYAN:MAG,.7+Math.random()*1.2);
+  for(let i=0;i<230;i++) add(Math.random()*TAU,Math.random()*.19,GOLD_HI,.8+Math.random());
+})();
+
+function wheelBase(){
+  return {cx:W/2,cy:H*.4,R:Math.min(W,H)*.27};
+}
+
+/* 第一态：实体唐卡金轮 */
+function drawSolid(rot,alpha){
+  const {cx,cy,R}=wheelBase();
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(rot);ctx.globalAlpha=alpha;
+  ctx.shadowBlur=26;
+  for(const [rr,col,lw] of [[1,GOLD,5],[.88,GOLD_HI,2.2]]){
+    ctx.beginPath();ctx.arc(0,0,R*rr,0,TAU);
+    ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.shadowColor=col;ctx.stroke();
+  }
+  ctx.shadowBlur=14;
+  for(let i=0;i<32;i++){const a=i/32*TAU;
+    ctx.beginPath();ctx.arc(Math.cos(a)*R*.94,Math.sin(a)*R*.94,3,0,TAU);
+    ctx.fillStyle=i%4===0?MAG:GOLD_HI;ctx.shadowColor=ctx.fillStyle;ctx.fill();}
+  /* 八辐：火焰状渐变 */
+  ctx.shadowBlur=20;
+  for(let s=0;s<8;s++){
+    const a=s*TAU/8,col=s%2?CYAN:MAG;
+    const g=ctx.createLinearGradient(Math.cos(a)*R*.2,Math.sin(a)*R*.2,Math.cos(a)*R*.88,Math.sin(a)*R*.88);
+    g.addColorStop(0,'#ffffff');g.addColorStop(.35,col);g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.shadowColor=col;
+    const ca=Math.cos(a),sa=Math.sin(a),pa=Math.cos(a+Math.PI/2),pb=Math.sin(a+Math.PI/2),
+          w1=.045,w2=.10;
+    ctx.beginPath();
+    ctx.moveTo(ca*R*.2+pa*R*w1,sa*R*.2+pb*R*w1);
+    ctx.quadraticCurveTo(ca*R*.55+pa*R*w2*1.2,sa*R*.55+pb*R*w2*1.2,ca*R*.88,sa*R*.88);
+    ctx.quadraticCurveTo(ca*R*.55-pa*R*w2*1.2,sa*R*.55-pb*R*w2*1.2,ca*R*.2-pa*R*w1,sa*R*.2-pb*R*w1);
+    ctx.closePath();ctx.fill();
+  }
+  /* 轮毂莲华 */
+  ctx.strokeStyle=GOLD_HI;ctx.lineWidth=3;ctx.shadowColor=GOLD;
+  ctx.beginPath();ctx.arc(0,0,R*.2,0,TAU);ctx.stroke();
+  ctx.fillStyle=MAG;ctx.shadowColor=MAG;
+  ctx.beginPath();ctx.arc(0,0,R*.055,0,TAU);ctx.fill();
+  ctx.lineWidth=1.6;ctx.strokeStyle=GOLD;ctx.shadowBlur=12;
+  for(let p=0;p<8;p++){
+    ctx.save();ctx.rotate(p*TAU/8);
+    ctx.beginPath();ctx.moveTo(R*.08,0);
+    ctx.quadraticCurveTo(R*.14,R*.06,R*.19,0);
+    ctx.quadraticCurveTo(R*.14,-R*.06,R*.08,0);
+    ctx.stroke();ctx.restore();
+  }
+  ctx.restore();
+}
+
+/* 第二态：线描 */
+function drawLine(rot,alpha){
+  const {cx,cy,R}=wheelBase();
+  const r=R*(1+.1*alpha);
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(rot);ctx.globalAlpha=alpha*.95;
+  ctx.lineWidth=1.4;
+  ctx.setLineDash([10,7]);ctx.strokeStyle=GOLD_HI;
+  ctx.beginPath();ctx.arc(0,0,r,0,TAU);ctx.stroke();
+  ctx.setLineDash([]);ctx.lineWidth=1;ctx.strokeStyle='rgba(45,212,232,.85)';
+  ctx.beginPath();ctx.arc(0,0,r*.88,0,TAU);ctx.stroke();
+  for(let s=0;s<8;s++){const a=s*TAU/8;
+    ctx.strokeStyle=s%2?'rgba(45,212,232,.9)':'rgba(244,63,142,.9)';ctx.lineWidth=1.3;
+    ctx.beginPath();ctx.moveTo(Math.cos(a)*r*.2,Math.sin(a)*r*.2);
+    ctx.lineTo(Math.cos(a)*r*.88,Math.sin(a)*r*.88);ctx.stroke();}
+  ctx.strokeStyle=GOLD_HI;ctx.beginPath();ctx.arc(0,0,r*.2,0,TAU);ctx.stroke();
+  ctx.restore();
+}
+
+/* 第三态：粒子漩涡消散 */
+function drawParticles(t,fade,rot){
+  const {cx,cy,R}=wheelBase();
+  ctx.save();ctx.translate(cx,cy);ctx.globalCompositeOperation='lighter';
+  for(const p of PARTS){
+    const ang=p.a+rot*.15+t*(1.1+p.k*.35);
+    const rad=p.r*R*(1+t*(.9+p.v))+Math.sin(p.k+t*9)*26*t;
+    ctx.globalAlpha=fade*(.35+.65*Math.abs(Math.sin(p.k+t*4)));
+    ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=8;
+    ctx.beginPath();ctx.arc(Math.cos(ang)*rad,Math.sin(ang)*rad,p.s*(1+t*.6),0,TAU);ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ================= 菩萨胁侍 · 三十六相 ================= */
+/* 六种持物变相：莲花 / 宝剑 / 经卷 / 净瓶 / 金刚杵 / 杨柳 */
+const ATTRS=[
+  {name:'莲华',sash:MAG,svg:`
+    <path d="M139 232c-9-18-3-35 11-41 7 15 5 31-5 43z" fill="${MAG}" opacity=".9"/>
+    <path d="M145 228c0-13 8-23 19-26-2 14-9 24-19 26z" fill="${CYAN}" opacity=".75"/>
+    <path d="M132 240q10 6 24 2" stroke="${GOLD}" stroke-width="1.6" fill="none"/>`},
+  {name:'宝剑',sash:CYAN,svg:`
+    <line x1="150" y1="196" x2="132" y2="252" stroke="${GOLD_HI}" stroke-width="3"/>
+    <line x1="141" y1="218" x2="155" y2="213" stroke="${GOLD}" stroke-width="2.4"/>
+    <circle cx="152" cy="198" r="3" fill="${MAG}"/>`},
+  {name:'经卷',sash:GOLD,svg:`
+    <rect x="126" y="228" width="30" height="15" rx="2" fill="none" stroke="${CYAN}" stroke-width="1.8"/>
+    <circle cx="126" cy="235.5" r="4" fill="none" stroke="${GOLD_HI}" stroke-width="1.6"/>
+    <circle cx="156" cy="235.5" r="4" fill="none" stroke="${GOLD_HI}" stroke-width="1.6"/>
+    <line x1="133" y1="235.5" x2="150" y2="235.5" stroke="${MAG}" stroke-width="1.2"/>`},
+  {name:'净瓶',sash:MAG,svg:`
+    <path d="M141 224v6c-7 3-10 10-8 17 2 8 9 12 17 10 8-2 11-9 9-16-1-6-6-10-11-11v-6"
+          fill="none" stroke="${GOLD_HI}" stroke-width="2"/>
+    <circle cx="145" cy="216" r="2.6" fill="${CYAN}"/>`},
+  {name:'金刚杵',sash:CYAN,svg:`
+    <line x1="124" y1="240" x2="160" y2="228" stroke="${GOLD}" stroke-width="2.6"/>
+    <circle cx="122" cy="241" r="4" fill="${MAG}"/><circle cx="162" cy="227" r="4" fill="${MAG}"/>
+    <circle cx="143" cy="235" r="2.4" fill="${GOLD_HI}"/>`},
+  {name:'杨柳',sash:GOLD,svg:`
+    <path d="M136 246q8-22 22-34" fill="none" stroke="${GOLD_HI}" stroke-width="1.8"/>
+    <path d="M146 226q-8-6-6-14 8 2 10 10zM152 218q-7-8-3-15 7 4 8 12zM157 212q-5-9 0-16 6 6 5 14z"
+          fill="${CYAN}" opacity=".8"/>`}
+];
+
+function attendantSVG(v){
+  /* 无相面容的胁侍菩萨：头光 + 火焰背光 + 流线衣纹 + 莲座 */
+  let flames='';
+  for(let i=0;i<12;i++){
+    const a=i/12*TAU,hx=100+Math.cos(a)*58,hy=88+Math.sin(a)*58,
+          tx=100+Math.cos(a)*76,ty=88+Math.sin(a)*76,
+          col=i%2?CYAN:MAG;
+    flames+=`<line x1="${hx.toFixed(1)}" y1="${hy.toFixed(1)}" x2="${tx.toFixed(1)}" y2="${ty.toFixed(1)}"
+      stroke="${col}" stroke-width="1.4" opacity=".55"/>`;
+  }
+  return `
+  <g class="variant">
+    ${flames}
+    <circle cx="100" cy="88" r="47" fill="none" stroke="${GOLD}" stroke-width="2" opacity=".85"/>
+    <circle cx="100" cy="88" r="40" fill="none" stroke="${GOLD_HI}" stroke-width=".8" opacity=".4"/>
+    <circle cx="100" cy="88" r="13.5" fill="none" stroke="${GOLD_HI}" stroke-width="2"/>
+    <path d="M100 103c-9 10-13 22-13 34 0 0 26 0 26 0 0-12-4-24-13-34z" fill="none" stroke="${GOLD_HI}" stroke-width="1.2" opacity=".7"/>
+    <path d="M87 137c-14 26-18 66-12 100 8 40 10 66 6 88h38c-4-22-2-48 6-88 6-34 2-74-12-100-10-6-16-6-26 0z"
+      fill="rgba(23,16,43,.72)" stroke="${GOLD}" stroke-width="2"/>
+    <path d="M87 137c10 14 16 14 26 0 10 14 16 14 26 0" fill="none" stroke="${v.sash}" stroke-width="1.6" opacity=".8"/>
+    <path d="M84 190q16 10 32 0M88 240q12 8 24 0" fill="none" stroke="${v.sash}" stroke-width="1.1" opacity=".5"/>
+    <path d="M84 160c-16 18-22 44-16 74l8-2c-4-26 0-48 12-64z" fill="rgba(45,212,232,.14)" stroke="${CYAN}" stroke-width="1.2" opacity=".6"/>
+    <path d="M89 168c-10 14-14 34-10 56" fill="none" stroke="${GOLD_HI}" stroke-width="1" opacity=".5"/>
+    <path d="M92 150c-14 10-24 34-26 62" fill="none" stroke="${GOLD_HI}" stroke-width="1" opacity=".35"/>
+    <path d="M100 330c-22 0-40 10-46 26h92c-6-16-24-26-46-26z" fill="rgba(23,16,43,.8)" stroke="${GOLD}" stroke-width="1.8"/>
+    <path d="M62 356q38 14 76 0M70 368q30 10 60 0" fill="none" stroke="${GOLD_HI}" stroke-width="1.2" opacity=".55"/>
+    ${v.svg}
+  </g>`;
+}
+
+const attEls={L:document.getElementById('att-L'),R:document.getElementById('att-R')};
+for(const side of ['L','R']){
+  attEls[side].innerHTML=ATTRS.map(v=>attendantSVG(v)).join('');
+}
+const variantGroups={};
+for(const side of ['L','R'])
+  variantGroups[side]=[...attEls[side].querySelectorAll('.variant')];
+
+function updateAttendants(p){
+  const vis=smooth(.03,.12,p)*(1-smooth(.88,1,p));
+  const idx=Math.min(5,Math.floor(p*5.999));
+  const local=p*6-idx;               /* 本变相内的局部进度 */
+  const cross=smooth(.78,1,local);   /* 段末交叉淡入下一相 */
+  for(const side of ['L','R']){
+    attEls[side].style.opacity=(vis*(0.75+0.25*Math.sin(p*40+ (side==='L'?0:2)))).toFixed(3);
+    const gs=variantGroups[side];
+    gs.forEach((g,i)=>{
+      let o=0;
+      if(i===idx)o=1-cross;
+      else if(i===idx+1)o=cross;
+      g.style.opacity=o.toFixed(3);
+      g.style.transform=`translateY(${(-8+((p*53+i*7)%17)).toFixed(1)}px)`;
+    });
+  }
+}
+
+/* ================= 主循环 ================= */
+const captionEl=document.getElementById('mark-caption');
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function frame(){
+  smoothP+=(scrollP-smoothP)*.09;
+  if(Math.abs(scrollP-smoothP)<.0004)smoothP=scrollP;
+  const p=smoothP;
+  const rot=p*TAU*1.6+performance.now()*.00003;
+
+  const solidA=1-smooth(.15,.40,p);
+  const lineA=smooth(.18,.40,p)*(1-smooth(.45,.66,p));
+  const partT=smooth(.40,.62,p);
+  const partFade=smooth(.40,.55,p)*(1-smooth(.82,.99,p));
+
+  ctx.clearRect(0,0,W,H);
+  if(solidA>.01)drawSolid(rot,solidA);
+  if(lineA>.01)drawLine(rot,lineA);
+  if(partFade>.01)drawParticles(partT,partFade,rot);
+
+  updateAttendants(p);
+  captionEl.textContent=`三十六相 · 第 ${1+Math.min(35,Math.floor(p*35.999))} 相`;
+  captionEl.style.opacity=(0.25+0.75*smooth(.02,.1,p)*(1-smooth(.9,1,p))).toFixed(3);
+
+  requestAnimationFrame(frame);
+}
+if(reduced){
+  ctx.clearRect(0,0,W,H);
+  drawSolid(0,1);
+  updateAttendants(0);
+  captionEl.style.opacity=0;
+}else{
+  requestAnimationFrame(frame);
+}
+</script>
 </body>
 </html>
